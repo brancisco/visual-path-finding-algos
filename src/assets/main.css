@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+body {
+    background: #2C3A47;
+    color: white;
+    margin: 0;
+    /*position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;*/
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+#app {
+    position: relative;
+    padding: 10px;
+}
+
+#menu {
+    width: 100%;
+    padding: 10px;
+    margin: -10px 0 0 -10px;
+    background: #CAD3C8;
+}
+
+#menu-inner-wrap, #menu-left, #menu-right {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#menu-inner-wrap {
+    justify-content: space-between;
+}
+
+
+#menu-left > * {
+    margin: 0 5px 4px 0;
+}
+
+#menu-right > * {
+    margin: 0 10px;
+}
+
+#menu-right > * > p {
+    margin: 5px 0;
+}
+
+#tip {
+    color: black;
+}
+
+.title-text {
+    text-align: center;
+}
+
+.title-text p {
+    margin-bottom: 0;
+}
+
+button, select {
+    cursor: pointer;
+    width: 100px;
+    height: 25px;
+    border: 1px solid white;
+    border-radius: 10px;
+    background-color: white;
+}
+
+button.selecting-start-node {
+    color: white;
+    background-color: #EAB543;
+}
+
+button.selecting-end-node {
+    color: white;
+    background-color: #FC427B;
+}
+
+#fps-wrap {
+    width: 70px;
+    display: block;
+    color: black;
+}
+
+#svg-container {
+    max-width: 1000px;
+    display: block;
+    position: relative;
+    width: 100%;
+    vertical-align: top;
+    margin: auto;
+}
+
+.responsive-svg {
+}
+
+/*svg {
+    pointer-events: none;
+}
+*/
+circle, rect {
+    /*pointer-events: initial;*/
+    cursor: pointer;
+    transition: fill 1s;
+}
+
+.queued {
+    animation-duration: 0.7s;
+    animation-name: bob-small;
+}
+
+.wall {
+    transition: all 1s;
+    transform: scale(1.2);
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+}
+
+.inpath {
+    animation-duration: 0.7s;
+    animation-name: bob-big;
+}
+
+.open {
+    transition: all 0.5s;
+    transform: scale(1);
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+}
+
+.open:hover {
+    transform: scale(1.3);
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+}
+
+@keyframes bob-small {
+    0% {
+        transform: scale(1);
+        transform-origin: 50% 50%;
+        transform-box: fill-box;
+    }
+
+    50% {
+        transform: scale(0.7);
+        transform-origin: 50% 50%;
+    }
+
+    100% {
+        transform: scale(1);
+        transform-origin: 50% 50%;
+        transform-box: fill-box;
+    }
+}
+
+@keyframes bob-big {
+    0% {
+        transform: scale(1);
+        transform-origin: 50% 50%;
+        transform-box: fill-box;
+    }
+
+    50% {
+        transform: scale(1.2);
+        transform-origin: 50% 50%;
+    }
+
+    100% {
+        transform: scale(1);
+        transform-origin: 50% 50%;
+        transform-box: fill-box;
+    }
+}
