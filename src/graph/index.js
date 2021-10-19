@@ -22,70 +22,89 @@ export class Node {
         this.type = Open
         this.inpath = false
     }
+
+    setType (type) {
+        this.type = type
+    }
+
+    setInPath (inpath) {
+        this.inpath = inpath
+    }
+
+    setDist (dist) {
+        this.dist = dist
+    }
+
+    setScore (score) {
+        this.score = score
+    }
+
+    setPrev (prev) {
+        this.prev = prev
+    }
+
+    setVisited (visited) {
+        this.visited = visited
+    }
+
+    setQueued (queued) {
+        this.queued = queued
+    }
 }
 
 export class Graph {
-    constructor (nodes=[], queueType=FifoQueue) {
+    constructor (nodes=[], algo) {
+        this.algo = algo || 'dijkstra'
         this.nodes = nodes
         this.visited = []
-        this.unvisited = []
+        this.queue = new PriorityQueue()
+        this.queue._getter = (() => {
+            if (this.algo === 'dijkstra') {
+                return function (i) {
+                    return this.heap[i].dist
+                }
+            } else if (this.algo === 'astar') {
+                return function (i) {
+                    return this.heap[i].score
+                }
+            }
+        })()
         this.nodes.forEach(node => {
             if (node.type === Start) {
                 node.dist = 0
-                this.visited.push(node)
             }
-            else this.unvisited.push(node)
+            this.qpush(node)
         })
-        this.queueType = queueType
-        if (this.queueType === FifoQueue) {
-            this.queue = new FifoQueue()
-        }
-        else if (this.queueType === PriorityQueue) {
-            this.queue = new PriorityQueue
-            this.queue._getter = function (i) {
-                return this.heap[i].score
-            }
-        }
         this.diagonal = true
     }
 
     reset () {
+        this.queue = new PriorityQueue()
+        this.queue._getter = (() => {
+            if (this.algo === 'dijkstra') {
+                return function (i) {
+                    return this.heap[i].dist
+                }
+            } else if (this.algo === 'astar') {
+                return function (i) {
+                    return this.heap[i].score
+                }
+            }
+        })()
         for (let node of this.nodes) {
-            node.visited = false
-            node.queued = false
-            node.prev = null
-            node.dist = Number.POSITIVE_INFINITY
-            node.score = Number.POSITIVE_INFINITY
-            node.inpath = false
-            node.type = node.type === Wall ? Open : node.type
+            if (node.type !== Start) {
+                node.visited = false
+                node.queued = false
+                node.prev = null
+                node.dist = Number.POSITIVE_INFINITY
+                node.score = Number.POSITIVE_INFINITY
+                node.inpath = false
+                node.type = node.type === Wall ? Open : node.type
+            }
+            this.qpush(node)
         }
         this.visited = []
-        this.unvisited = []
-        this.nodes.forEach(node => {
-            if (node.type === Start) {
-                node.dist = 0
-                this.visited.push(node)
-            }
-            else this.unvisited.push(node)
-        })
-        if (this.queueType === FifoQueue) {
-            this.queue = new FifoQueue()
-        }
-        else if (this.queueType === PriorityQueue) {
-            this.queue = new PriorityQueue
-            this.queue._getter = function (i) {
-                return this.heap[i].score
-            }
-        }
-    }
-
-    nodeUpdate () {
-        this.visited = []
-        this.unvisited = []
-        this.nodes.forEach(node => {
-            if (node.type === Start) this.visited.push(node)
-            else this.unvisited.push(node)
-        })
+        
     }
 
     getNodeBy (by) {
@@ -124,24 +143,14 @@ export class Graph {
         return -1
     }
 
-    getNeighbors (x, y, markAsVisited=true) {
+    getNeighbors (x, y) {
         let neighbors = []
-        let unvisited = []
-        this.unvisited.forEach(node => {
+        this.queue.heap.forEach(node => {
             let dist = this.isNeighbor(x, y, node)
             if (dist >= 0) {
-                if (markAsVisited) {
-                    node.visited = true
-                    this.visited.push(node)
-                }
                 neighbors.push({ node, dist })
-            } else {
-                unvisited.push(node)
             }
         })
-        if (markAsVisited) {
-            this.unvisited = unvisited
-        }
         
         return neighbors.sort((a, b) => {
             return a.dist > b.dist ? 1 : -1
@@ -157,9 +166,11 @@ export class Graph {
             old.queued = false
         }
         let node = this.getNodeBy('POSITION', x, y)
-        node.visited = true
-        node.dist = 0
-        node.type = Start
+        node.setVisited(true)
+        node.setDist(0)
+        node.setScore(0)
+        node.setType(Start)
+        console.log(node)
     }
 
     setFinishNode (x, y) {
@@ -196,7 +207,7 @@ export class Graph {
 
     getNodes () {
         // NOTE: this needs to be sorted for svg css animation to work correctly
-        return [...this.unvisited, ...this.visited].sort((a, b) => {
+        return [...this.queue.heap, ...this.visited].sort((a, b) => {
             let n = a.x - b.x
             if (n !== 0) {
                 return n

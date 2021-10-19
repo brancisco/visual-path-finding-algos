@@ -11,7 +11,8 @@ const ROWS = 11
 const COLS = 25
 const SPACE = 600 / COLS
 const RADIUS = SPACE / 3
-const TIME = 32
+const TIME = 20
+const COLORFN = d3.interpolateRgbBasis(['#FC427B', '#FFFFFF', '#EAB543'])
 
 // intialize any global vars
 var play = false
@@ -73,14 +74,8 @@ tipDisplay.appendChild((() => {
 })())
 
 function initAlgorithm (algorithmName) {
-    let queueType;
-    if (algorithmName === 'astar') {
-        queueType = PriorityQueue
-    } else if (algorithmName === 'dijkstra') {
-        queueType = FifoQueue
-    }
     // initialize the graph
-    var graph = new Graph([], queueType)
+    var graph = new Graph([], algorithmName)
     for (let i = 0; i < ROWS; i ++) {
         for (let j = 0; j < COLS; j ++) {
             graph.push(new Node(j, i))
@@ -154,8 +149,9 @@ function dragHandler (etype, event, selected) {
 }
 
 function mouseover (event, node) {
-    if (dragging && !node.visited && !node.queued && node.type === Open) {
+    if (dragging && !node.visited && node.type === Open) {
         node.type = Wall
+        node.queued = false
         animate()
     }
 }
@@ -168,7 +164,7 @@ function handleTouch (event, node) {
     } else if ('touchend' === event.type) {
         dragging = false
     }
-    if (['pointerenter', 'pointerout'].includes(event.type) && dragging && !node.visited && !node.queued && node.type === Open) {
+    if (['pointerenter', 'pointerout'].includes(event.type) && dragging && !node.visited && node.type === Open) {
         node.type = Wall
         animate()
     }
@@ -187,7 +183,7 @@ function animate () {
             .attr('cy', (node) => 5 + RADIUS + node.y*SPACE)
             .attr('r', RADIUS)
             .classed('visited', (node) => node.visited)
-            .classed('queued', (node) => node.queued)
+            .classed('queued', (node) => node.dist < Number.POSITIVE_INFINITY)
             .classed('inpath', (node) => node.inpath)
             .classed('wall', (node) => node.type === Wall)
             .classed('open', (node) => node.type === Open &&
@@ -204,10 +200,10 @@ function animate () {
                     return '#BDC581'
                 else if (node.inpath)
                     return '#1B9CFC'
-                else if (node.queued)
-                    return '#D6A2E8'
                 else if (node.visited)
                     return '#9AECDB'
+                else if (node.dist < Number.POSITIVE_INFINITY)
+                    return '#D6A2E8'
                 else return '#b2bec3'
             })
             .call(drag)
@@ -215,9 +211,6 @@ function animate () {
             .on('mouseout', mouseover)
             .on('pointerenter pointerout', handleTouch)
             
-
-
-
     glines.selectAll('line')
         .data(dijkstra.graph.getNodes())
         .join('line')
@@ -225,8 +218,19 @@ function animate () {
             .attr('y1', (node) => 5 + RADIUS + node.y*SPACE)
             .attr('x2', (node) => 5 + RADIUS + (node.prev ? node.prev.x : node.x)*SPACE)
             .attr('y2', (node) => 5 + RADIUS + (node.prev ? node.prev.y : node.y)*SPACE)
-            .attr('stroke-width', 1)
-            .attr('stroke', 'white')
+            .attr('stroke-width', (node) => {
+                if (node.inpath && node.prev && node.prev.inpath) {
+                    return 3
+                }
+                return 1
+            })
+            .attr('stroke', (node) => {
+                if (node.inpath && node.prev && node.prev.inpath) {
+                    const ind = dijkstra.path.findIndex(n => n.x === node.x && n.y === node.y)
+                    return COLORFN(ind/dijkstra.path.length)
+                }
+                return 'white'
+            })
 }
 
 animate()
