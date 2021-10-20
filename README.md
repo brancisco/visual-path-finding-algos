@@ -6,6 +6,8 @@ A project to explore and better understand path finding algorithms.
 
 https://brancisco.github.io/visual-path-finding-algos/
 
+![A Star Example](/img/Astar.png)
+
 ## TODO
 
 - [ ] Better comments through code.
