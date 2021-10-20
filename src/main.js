@@ -19,6 +19,7 @@ var play = false
 var dragging = false
 var selecting = 0
 var algo = 'dijkstra'
+var heuristic = 'euclidean'
 var startpos = [4, 5]
 var finishpos = [20, 5]
 var fps = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -40,7 +41,8 @@ resetbutton.innerHTML = 'Reset'
 resetbutton.onclick = function () {
     play = false
     playbutton.innerHTML = play ? 'Pause' : 'Play'
-    dijkstra = initAlgorithm(algo)
+    playbutton.removeAttribute('disabled')
+    dijkstra = initAlgorithm(algo, heuristic)
     animate()
 }
 
@@ -49,7 +51,7 @@ setNodeButton.innerHTML = 'Set Goals'
 setNodeButton.onclick = function () {
     play = false
     playbutton.innerHTML = play ? 'Pause' : 'Play'
-    dijkstra = initAlgorithm(algo)
+    dijkstra = initAlgorithm(algo, heuristic)
     animate()
     selecting = 2
     this.classList.toggle('selecting-start-node')
@@ -57,10 +59,23 @@ setNodeButton.onclick = function () {
 }
 
 // create selects
+const heuristicSelector = document.getElementById('select-heuristic')
+heuristicSelector.onchange = function () { 
+    heuristic = this.value
+    dijkstra = initAlgorithm(algo, heuristic)
+    animate()
+}
+
 const algoSelector = document.getElementById('select-algo')
 algoSelector.onchange = function () { 
     algo = this.value
-    dijkstra = initAlgorithm(algo)
+    if (algo == 'astar') {
+        heuristicSelector.removeAttribute('hidden')
+    } else {
+        heuristicSelector.setAttribute('hidden', true)
+    }
+    dijkstra = initAlgorithm(algo, heuristic)
+    animate()
 }
 
 const fpsDisplay = document.getElementById('fps-meter')
@@ -73,9 +88,21 @@ tipDisplay.appendChild((() => {
     return tip
 })())
 
-function initAlgorithm (algorithmName) {
+function initAlgorithm (algorithmName, heuristicName) {
+    let queue = new PriorityQueue()
+    queue._getter = (() => {
+        if (algorithmName === 'dijkstra') {
+            return function (i) {
+                return this.heap[i].dist
+            }
+        } else if (algorithmName === 'astar') {
+            return function (i) {
+                return this.heap[i].score
+            }
+        }
+    })()
     // initialize the graph
-    var graph = new Graph([], algorithmName)
+    var graph = new Graph(queue, [])
     for (let i = 0; i < ROWS; i ++) {
         for (let j = 0; j < COLS; j ++) {
             graph.push(new Node(j, i))
@@ -85,18 +112,19 @@ function initAlgorithm (algorithmName) {
     graph.setFinishNode(...finishpos)
 
     // initialize the dijkstra algo stepper
-    return new Dijkstra(graph)
+    return new Dijkstra(graph, heuristicName)
 }
 
-var dijkstra = initAlgorithm(algo)
+var dijkstra = initAlgorithm(algo, heuristic)
 
 function playAnimation (time) {
     const start = performance.now()
     animate()
     if (dijkstra.step()) {
         play = false
-        playbutton.innerHTML = 'Replay'
-        dijkstra.reset()
+        playbutton.innerHTML = 'Finished'
+        playbutton.setAttribute('disabled', true)
+        // dijkstra.reset()
         return
     }
     if (play) {
@@ -127,18 +155,17 @@ function dragHandler (etype, event, selected) {
     if (etype === 'start' && selecting) {
         const node = event.subject
         if (selecting === 2) {
-            console.log(setNodeButton)
             setNodeButton.classList.toggle('selecting-start-node')
             setNodeButton.classList.toggle('selecting-end-node')
             setNodeButton.innerHTML = 'Set Finish'
             startpos = [node.x, node.y]
-            dijkstra.graph.setStartNode(node.x, node.y)
+            dijkstra.graph.setStartNode(...startpos)
         }
         else if (selecting === 1) {
             setNodeButton.classList.toggle('selecting-end-node')
             setNodeButton.innerHTML = 'Set Goals'
             finishpos = [node.x, node.y]
-            dijkstra.graph.setFinishNode(node.x, node.y)
+            dijkstra.graph.setFinishNode(...finishpos)
         }
         dijkstra.reset()
         animate()

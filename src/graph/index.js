@@ -53,22 +53,10 @@ export class Node {
 }
 
 export class Graph {
-    constructor (nodes=[], algo) {
-        this.algo = algo || 'dijkstra'
+    constructor (queue, nodes=[]) {
         this.nodes = nodes
         this.visited = []
-        this.queue = new PriorityQueue()
-        this.queue._getter = (() => {
-            if (this.algo === 'dijkstra') {
-                return function (i) {
-                    return this.heap[i].dist
-                }
-            } else if (this.algo === 'astar') {
-                return function (i) {
-                    return this.heap[i].score
-                }
-            }
-        })()
+        this.queue = queue
         this.nodes.forEach(node => {
             if (node.type === Start) {
                 node.dist = 0
@@ -79,18 +67,7 @@ export class Graph {
     }
 
     reset () {
-        this.queue = new PriorityQueue()
-        this.queue._getter = (() => {
-            if (this.algo === 'dijkstra') {
-                return function (i) {
-                    return this.heap[i].dist
-                }
-            } else if (this.algo === 'astar') {
-                return function (i) {
-                    return this.heap[i].score
-                }
-            }
-        })()
+        this.queue.empty()
         for (let node of this.nodes) {
             if (node.type !== Start) {
                 node.visited = false
@@ -104,7 +81,6 @@ export class Graph {
             this.qpush(node)
         }
         this.visited = []
-        
     }
 
     getNodeBy (by) {
@@ -162,6 +138,7 @@ export class Graph {
         if (old) {
             old.visited = false
             old.dist = Number.POSITIVE_INFINITY
+            old.score = Number.POSITIVE_INFINITY
             old.type = Open
             old.queued = false
         }
@@ -170,7 +147,6 @@ export class Graph {
         node.setDist(0)
         node.setScore(0)
         node.setType(Start)
-        console.log(node)
     }
 
     setFinishNode (x, y) {

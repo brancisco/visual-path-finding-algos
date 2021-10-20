@@ -1,14 +1,27 @@
 import { Start, Finish, Wall, Open } from '@/graph'
 
 export default class Dijkstra {
-    constructor (graph) {
+    constructor (graph, heuristicName) {
         this.graph = graph
+        this.heuristic = this.setHeuristic(heuristicName)
         this.startNode = this.graph.getNodeBy('TYPE', Start)
         this.finishNode = this.graph.getNodeBy('TYPE', Finish)
         this.pathFound = false
         this.path = []
         this.pathIndex = 0
         console.log(this.graph.queue)
+    }
+
+    setHeuristic (heuristicName) {
+        if (heuristicName === 'euclidean') {
+            return (node) => {
+                return Math.sqrt(Math.pow(node.x - this.finishNode.x, 2) + Math.pow(node.y - this.finishNode.y, 2))
+            }
+        } else if (heuristicName === 'manhattan') {
+            return (node) => {
+                return Math.abs(node.x - this.finishNode.x, 2) + Math.abs(node.y - this.finishNode.y, 2)
+            }
+        }
     }
 
     isSame (n1, n2) {
@@ -26,15 +39,6 @@ export default class Dijkstra {
         console.log(this.graph.queue)
     }
 
-    heuristic () {
-        // TODO
-    }
-
-    _manhattanDist (node) {
-        return Math.sqrt(Math.pow(node.x - this.finishNode.x, 2) + Math.pow(node.y - this.finishNode.y, 2))
-        // return Math.abs(node.x - this.finishNode.x, 2) + Math.abs(node.y - this.finishNode.y, 2)
-    }
-
     step () {
         if (!this.pathFound) {
             const node = this.graph.qpop()
@@ -46,7 +50,7 @@ export default class Dijkstra {
                 let newdist = node.dist + neighbor.dist
                 if (newdist < neighbor.node.dist) {
                     neighbor.node.dist = newdist
-                    neighbor.node.score = neighbor.node.dist + this._manhattanDist(neighbor.node)
+                    neighbor.node.score = neighbor.node.dist + this.heuristic(neighbor.node)
                     neighbor.node.prev = node
                 }
                 if (this.isSame(neighbor.node, this.finishNode)) {
