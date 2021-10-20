@@ -12,7 +12,8 @@ const COLS = 25
 const SPACE = 600 / COLS
 const RADIUS = SPACE / 3
 const TIME = 20
-const COLORFN = d3.interpolateRgbBasis(['#FC427B', '#FFFFFF', '#EAB543'])
+const COLORFN_LINE = d3.interpolateRgbBasis(['#FC427B', '#FFFFFF', '#EAB543'])
+const COLORFN_QUEUE = d3.interpolateRgbBasis(['#FFFFFF', '#FD7272'])
 
 // intialize any global vars
 var play = false
@@ -23,6 +24,7 @@ var heuristic = 'euclidean'
 var startpos = [4, 5]
 var finishpos = [20, 5]
 var fps = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var max_dist = Number.POSITIVE_INFINITY
 
 // get the app element
 var app = document.getElementById('app')
@@ -112,7 +114,9 @@ function initAlgorithm (algorithmName, heuristicName) {
     graph.setFinishNode(...finishpos)
 
     // initialize the dijkstra algo stepper
-    return new Dijkstra(graph, heuristicName)
+    const d = new Dijkstra(graph, heuristicName)
+    max_dist = d.heuristic(d.startNode)
+    return d
 }
 
 var dijkstra = initAlgorithm(algo, heuristic)
@@ -203,6 +207,20 @@ var drag = d3.drag()
     .on('end',function (event) { dragHandler('end', event, d3.select(this)) })
 
 function animate () {
+    const [max_value, min_value] = (() => {
+        let min = Number.POSITIVE_INFINITY
+        let max = Number.NEGATIVE_INFINITY
+
+        for (const node of dijkstra.graph.queue.heap) {
+            if (min > node.score)
+                min = node.score
+            if (node.score < Number.POSITIVE_INFINITY && max < node.score)
+                max = node.score
+        }
+        return [max, min]
+    })()
+    const diff = max_value - min_value
+
     g.selectAll('circle')
         .data(dijkstra.graph.getNodes())
         .join('circle')
@@ -229,8 +247,14 @@ function animate () {
                     return '#1B9CFC'
                 else if (node.visited)
                     return '#9AECDB'
-                else if (node.dist < Number.POSITIVE_INFINITY)
-                    return '#D6A2E8'
+                else if (node.dist < Number.POSITIVE_INFINITY) {
+                    if (algo === 'dijkstra') {
+                        return '#D6A2E8'
+                    }
+                    else if (algo === 'astar') {
+                        return COLORFN_QUEUE(((max_value - node.score)/diff))
+                    }
+                }
                 else return '#b2bec3'
             })
             .call(drag)
@@ -254,7 +278,7 @@ function animate () {
             .attr('stroke', (node) => {
                 if (node.inpath && node.prev && node.prev.inpath) {
                     const ind = dijkstra.path.findIndex(n => n.x === node.x && n.y === node.y)
-                    return COLORFN(ind/dijkstra.path.length)
+                    return COLORFN_LINE(ind/dijkstra.path.length)
                 }
                 return 'white'
             })
