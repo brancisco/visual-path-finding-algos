@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Path App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div id="app">
+        <div id="menu">
+            <div id="menu-inner-wrap">
+                <div id="menu-left">
+                    <button id="play-button">Play</button>
+                    <button id="reset-button">Reset</button>
+                    <button id="set-goals-button">Set Goal Nodes</button>
+                    <select id="select-algo">
+                        <option value="dijkstra">Dijkstra</option>
+                        <option value="astar">A*</option>
+                    </select>
+                    <select id="select-heuristic" hidden>
+                        <option value="euclidean">Euclidean</option>
+                        <option value="manhattan">Manhattan</option>
+                    </select>
+                </div>
+                <div id="menu-right">
+                    <div id="tip"></div>
+                    <div id="fps-wrap"><p>fps: <span id="fps-meter">fps</span></p></div>
+                </div>
+            </div>
+        </div>
+        <div class="title-text">
+            <h1>Path Finding Algorithm Visualizer</h1>
+            <p><small>By Brandon Aguirre</small></p>
+        </div>
+        <div id="svg-container"></div>
+        <div id="info" hidden>
+            <div>
+                <h2>Dijkstra</h2>
+            </div>
+            <div>
+                <h2>A*</h2>
+            </div>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
